@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>John Jay College Diploma Candidates</title>
+
+    <link rel="stylesheet" type="text/css" href="main.css">
+
+    <script src="./node_modules/web3/dist/web3.min.js"></script>
+    <script src="https://cdn.rawgit.com/ethereum/web3.js/develop/dist/web3.js"></script>
+
+</head>
+<body>
+<div class="container">
+
+    <h1>John Jay College Diploma Candidates</h1>
+
+    <h2 id="student"></h2>
+    <span id="insTrans"></span>
+    <hr>
+
+    <img id="loader" src="https://loading.io/spinners/double-ring/lg.double-ring-spinner.gif">
+
+    <label for="sem" class="col-lg-2 control-label">Semester:</label>
+    <input id="sem" type="text">
+
+    <label for="year" class="col-lg-2 control-label">Year:</label>
+    <input id="year" type="text">
+
+    <label for="mr" class="col-lg-2 control-label">Merkle Root:</label>
+    <input id="mr" type="text">
+
+    <label for="file">Choose a directory:</label>
+    <input type="file" id="files" name="files[]" multiple /> 
+    <output id="list"></output>
+
+    <button id="button">Submit</button>
+
+</div>
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+<!--<script src="node_modules/merkletreejs/"></script>-->
+
+<script>
+
+    if (window.File && window.FileReader && window.FileList && window.Blob) {
+    } 
+    else {
+        alert('The File APIs are not supported on this browser.');
+    }
+
+    function handleFileSelect(evt) {
+        var files = evt.target.files; 
+        
+        for (var i = 0, f; f = files[i]; i++) {
+            if (!f.type.match('image.*')) {
+                continue;
+            }
+        
+        var reader = new FileReader();
+        
+        reader.onload = (function(theFile) {
+            return function(e) {
+                var span = document.createElement('span');
+                span.innerHTML = ['<img class="thumb" src="', e.target.result,'" title="', escape(theFile.name), '"/>'].join('');
+                document.getElementById('list').insertBefore(span, null);
+        };
+      })(f);
+
+      reader.readAsDataURL(f);
+    }
+  }
+  document.getElementById('files').addEventListener('change', handleFileSelect, false);
+
+    var Web3 = require('web3');
+    $("#loader").hide();
+    if (typeof web3 !== 'undefined') {
+        web3 = new Web3(web3.currentProvider);
+    } else {
+        // set the provider you want from Web3.providers
+        web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+    }
+    //var accounts = await web3.eth.getAccounts()
+    //console.log(accounts[0])
+    web3.eth.defaultAccount = web3.eth.accounts[0]
+    //personal.unlockAccount(web3.eth.defaultAccount)
+
+    /*
+    web3.eth.getAccounts(function(error, accounts) {
+      console.log(accounts)
+    })*/
+
+    /*web3.eth.getAccounts((error, accounts) => {
+        if (error) {
+            console.log(error)
+            return
+        }
+        return accounts[0];
+    })
+
+    (async () => {
+    const accounts = await web3.eth.getAccounts();
+     console.log(accounts);
+     })();
+    */
+
+    /*
+    async function getCurrentAccount(){
+        const currentAccounts = await web3.eth.getAccounts();
+        return currentAccounts[0];
+    }
+    getCurrentAccount();*/
+    /*
+    var accountInterval = setInterval(function() {
+        if (web3.eth.accounts[0] !== account) {
+            account = web3.eth.accounts[0];
+            updateInterface();
+        }
+    }, 100);
+    */
+    var diplomaContract = web3.eth.contract([ { "constant": false, "inputs": [ { "name": "mr", "type": "uint256" }, { "name": "sem", "type": "uint256" } ], "name": "addSemester", "outputs": [], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "payable": false, "stateMutability": "nonpayable", "type": "constructor" }, { "anonymous": false, "inputs": [ { "indexed": false, "name": "hash", "type": "uint256" }, { "indexed": false, "name": "semester", "type": "uint256" } ], "name": "diplomaInfo", "type": "event" }, { "constant": true, "inputs": [ { "name": "sem", "type": "uint256" } ], "name": "getRoot", "outputs": [ { "name": "", "type": "uint256" } ], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [ { "name": "mr", "type": "uint256" } ], "name": "getSem", "outputs": [ { "name": "", "type": "uint256" } ], "payable": false, "stateMutability": "view", "type": "function" } ]);
+    var diploma = diplomaContract.at("0x10245d14b5c8368ec63969cea417e814e6cf5a33");
+    var diplomaEvent = diploma.diplomaInfo({},'latest');
+
+    diplomaEvent.watch(function(error, result) {
+        if (result) {
+            if (result.blockHash != $("#insTrans").html())
+                $("#loader").hide();
+            $("#insTrans").html('Block hash: ' + result.blockHash);
+            $("#student").html(web3.toAscii(result.args.sem)+ ' ' + web3.toAscii(result.args.mr));
+        } else {
+            $("#loader").hide();
+        }
+    });
+
+    $("#button").click(function() {
+        $("#loader").show();
+        diploma.addSemester($("#mr").val(), $("#sem").val(), (err, res) => {
+            if (err) {
+                $("#loader").hide();
+            }
+        });
+    });
+
+</script>
+
+</body>
+</html>

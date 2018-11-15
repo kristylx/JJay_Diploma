@@ -1,0 +1,19 @@
+{
+  "name": "jjay_diploma",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "lite-server"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "eslint": "^5.8.0",
+    "merkletreejs": "0.0.18",
+    "web3": "github:ethereum/web3.js"
+  },
+  "devDependencies": {
+    "lite-server": "^2.4.0"
+  }
+}
